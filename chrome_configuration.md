@@ -1,67 +1,54 @@
-# Guide de Résolution : Plantages du Rendu WebGL dans Google Chrome
+# Troubleshooting Guide: WebGL Rendering Crashes in Google Chrome
 
-Ce document décrit les procédures nécessaires pour résoudre les échecs de création de contexte WebGL dans Google Chrome, particulièrement fréquents lors de l'utilisation d'environnements virtualisés ou de bureaux à distance (Remote Desktop).
+This document describes the procedures required to resolve WebGL context creation failures in Google Chrome, which are particularly frequent when using virtualized environments or Remote Desktop.
 
-## 🚨 Symptômes courants
-Les journaux de console navigateur peuvent afficher des erreurs telles que :
-*   `A WebGL context could not be created`
-*   `ANGLE (Mesa, llvmpipe ...)`
-*   `BindToCurrentSequence failed`
-
----
-
-## 🛠️ Méthode 1 : Configuration via les Drapeaux Internes (Chrome Flags)
-
-Cette méthode est recommandée pour une configuration graphique persistante et facile à appliquer.
-
-### Étapes :
-
-1.  **Accéder aux drapeaux de configuration :**
-    Ouvrez Google Chrome et saisissez l'adresse suivante dans la barre d'adresse :
-    ```text
-    chrome://flags/
-    ```
-
-2.  **Forcer le rendu logiciel (Outrepasser la liste de blocage) :**
-    *   Recherchez `#ignore-gpu-blocklist` ou "**Override software rendering list**".
-    *   Définissez le paramètre sur **Enabled**.
-    *   *Explication : Permet d'utiliser l'accélération graphique même sur des pilotes GPU virtuels initialement rejetés.*
-
-3.  **Configurer le Backend Graphique ANGLE :**
-    *   Recherchez "**Choose ANGLE graphics backend**" (ou `#use-angle`).
-    *   Dans le menu déroulant, sélectionnez **OpenGL**.
-    *   *Note : Dans certains cas de virtualisation Linux/Remote Desktop, le moteur OpenGL offre une bien meilleure compatibilité que les options par défaut.*
-
-4.  **Redémarrer le navigateur :**
-    Cliquez sur le bouton bleu **Relaunch** en bas à droite de la fenêtre pour appliquer immédiatement les modifications.
+## 🚨 Common Symptoms
+The browser console logs may display errors such as:
+* `A WebGL context could not be created`
+* `ANGLE (Mesa, llvmpipe ...)`
+* `BindToCurrentSequence failed`
 
 ---
 
-## 💻 Méthode 2 : Lancement forcé par Ligne de Commande (CLI)
+## 🛠️ Method 1: Configuration via Internal Flags (Chrome Flags)
+This method is recommended for a persistent and easy-to-apply graphics configuration.
 
-Si l'interface graphique plante toujours, vous pouvez forcer Chrome à utiliser le moteur CPU de secours ultra-compatible (**SwiftShader**) directement depuis votre terminal.
+### Steps:
+1. **Access the configuration flags**: Open Google Chrome and enter the following address in the address bar: `chrome://flags/`
+2. **Override the software rendering list**:
+   - Search for `#ignore-gpu-blocklist` or "**Override software rendering list**".
+   - Set the parameter to **Enabled**.
+   - *Explanation*: Allows graphics acceleration to be used even on virtual GPU drivers that were initially rejected.
+3. **Configure the ANGLE Graphics Backend**:
+   - Search for "**Choose ANGLE graphics backend**" (or `#use-angle`).
+   - In the dropdown menu, select **OpenGL**.
+   - *Note*: In certain Linux virtualization/Remote Desktop scenarios, the OpenGL engine offers much better compatibility than the default options.
+4. **Relaunch the browser**: Click the blue **Relaunch** button at the bottom right of the window to apply the changes immediately.
 
-### Commande de lancement :
+---
 
-Exécutez la commande suivante dans votre terminal :
+## 💻 Method 2: Forced Launch via Command Line (CLI)
+If the graphical interface still crashes, you can force Chrome to use the highly compatible CPU fallback engine (**SwiftShader**) directly from your terminal.
+
+### Launch Command:
+Run the following command in your terminal:
 
 ```bash
 google-chrome --use-gl=angle --use-angle=swiftshader --ignore-gpu-blocklist
 ```
 
-### Détail des options utilisées :
-
+### Details of the options used:
 | Option | Description |
 | :--- | :--- |
-| `--use-gl=angle` | Force l'utilisation de la couche de traduction ANGLE. |
-| `--use-angle=swiftshader` | Force l'exécution du rendu logiciel stable par le CPU. |
-| `--ignore-gpu-blocklist` | Force Chrome à ignorer les blocages de compatibilité matérielle. |
+| `--use-gl=angle` | Forces the use of the ANGLE translation layer. |
+| `--use-angle=swiftshader` | Forces the execution of stable software rendering by the CPU. |
+| `--ignore-gpu-blocklist` | Forces Chrome to ignore hardware compatibility blocklists. |
 
 ---
 
-## ✅ Vérification
-Pour confirmer que le problème est résolu, naviguez vers cette adresse interne dans Chrome :
+## ✅ Verification
+To confirm that the issue is resolved, navigate to this internal address in Chrome:
 ```text
 chrome://gpu/
 ```
-Recherchez la section **Graphics Feature Status**. La ligne **WebGL** doit désormais afficher un état fonctionnel (ex: `Hardware accelerated` ou `Software only`), confirmant que le contexte 3D a pu s'ouvrir sans planter !
+Look for the **Graphics Feature Status** section. The **WebGL** line should now display a functional state (e.g., `Hardware accelerated` or `Software only`), confirming that the 3D context was successfully initialized without crashing!
