@@ -1,0 +1,15 @@
+# Ignorer les modules locaux pour forcer npm ci dans le conteneur
+node_modules
+npm-debug.log
+
+# Ignorer la configuration Docker elle-même et les contrôles de version
+Dockerfile
+.dockerignore
+.git
+.gitignore
+
+# Ignorer les fichiers annexes non nécessaires au runtime
+original.html
+openapi.yaml
+chrome_configuration.md
+chrome_configuration_en.md

@@ -1,0 +1,169 @@
+openapi: 3.0.3
+info:
+  title: Robot API Control Server
+  description: API specification for controlling the Three.js WebGL Robot real-time capabilities, including movement states, one-shot emotes, and facial expressions.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/robot/v1
+    description: Local Development Server
+paths:
+  /capabilities:
+    get:
+      summary: Get Robot Capabilities
+      description: Returns the complete registry of recognized movement states, animation emotes, and facial expression keys supported by the active model.
+      operationId: getCapabilities
+      responses:
+        '200':
+          description: Successfully retrieved valid capabilities registry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Capabilities'
+  /state:
+    post:
+      summary: Set Current Movement State
+      description: Transitions the robot into a looping movement state. Request validates input against availability.
+      operationId: setState
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateRequest'
+      responses:
+        '200':
+          description: State successfully queued and broadcast to listeners.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          description: Unrecognized state identifier provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /emote:
+    post:
+      summary: Fire One-Shot Emote
+      description: Triggers an instantaneous animation overlay (e.g. Jump, Wave) which automatically reverts to the current baseline state on completion.
+      operationId: triggerEmote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmoteRequest'
+      responses:
+        '200':
+          description: Emote directive successfully issued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          description: Unrecognized emote identifier provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /expression:
+    post:
+      summary: Set Facial Expression Weight
+      description: Adjusts the morph target influence weight for a specific facial animation channel.
+      operationId: updateExpression
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpressionRequest'
+      responses:
+        '200':
+          description: Expression channel weight successfully adjusted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          description: Invalid expression channel name or non-numeric value provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    Capabilities:
+      type: object
+      description: The list of pre-registered strings recognized by the backend for directive validity.
+      properties:
+        states:
+          type: array
+          items:
+            type: string
+          example: ["Idle", "Walking", "Running", "Dance", "Death", "Sitting", "Standing"]
+        emotes:
+          type: array
+          items:
+            type: string
+          example: ["Jump", "Yes", "No", "Wave", "Punch", "ThumbsUp"]
+        expressions:
+          type: array
+          items:
+            type: string
+          example: ["Angry", "Surprised", "Sad"]
+    StateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: The name of the target loop state.
+          enum: [Idle, Walking, Running, Dance, Death, Sitting, Standing]
+    EmoteRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: The name of the target action emote.
+          enum: [Jump, "Yes", "No", Wave, Punch, ThumbsUp]
+    ExpressionRequest:
+      type: object
+      required:
+        - name
+        - value
+      properties:
+        name:
+          type: string
+          description: The name of the target facial expression morph.
+          enum: [Angry, Surprised, Sad]
+        value:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Linear influence scalar. Values outside the interval [0, 1] are implicitly clamped by server runtime.
+    ActionResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Directive successfully sent."
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Informative error reasoning.
+          example: 'Invalid state name "Floating".'
