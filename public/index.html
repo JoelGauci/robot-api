@@ -31,6 +31,7 @@
         <h1>🤖 Robot Active</h1>
         <p>Waiting for directives via API...</p>
         <p id="status-text">Current State: Walking</p>
+        <p id="user-text">Current User: Loading...</p>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -54,6 +55,17 @@
         const emotes = ['Jump', 'Yes', 'No', 'Wave', 'Punch', 'ThumbsUp'];
         
         const statusEl = document.getElementById('status-text');
+        const userEl = document.getElementById('user-text');
+
+        fetch('/robot/v1/user')
+            .then(response => response.json())
+            .then(data => {
+                userEl.textContent = `Current User: ${data.user}`;
+            })
+            .catch(err => {
+                console.error('Error fetching user:', err);
+                userEl.textContent = `Current User: error`;
+            });
 
         // Setup scene
         const scene = new THREE.Scene();

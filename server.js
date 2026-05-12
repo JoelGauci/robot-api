@@ -23,6 +23,12 @@ app.get('/robot/v1/capabilities', (req, res) => {
     res.json(ROBOT_CAPABILITIES);
 });
 
+// Endpoint: Get current user from header
+app.get('/robot/v1/user', (req, res) => {
+    const user = req.headers['x-user'] || 'none';
+    res.json({ user });
+});
+
 // Utility to find case-insensitive match from capabilities
 function findCapability(list, target) {
     if (!target) return null;
