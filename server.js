@@ -18,15 +18,16 @@ const ROBOT_CAPABILITIES = {
     expressions: ['Angry', 'Surprised', 'Sad']
 };
 
+let currentUser = "none";
+
 // Optional: GET capabilities
 app.get('/robot/v1/capabilities', (req, res) => {
     res.json(ROBOT_CAPABILITIES);
 });
 
-// Endpoint: Get current user from header
+// Endpoint: Get current user
 app.get('/robot/v1/user', (req, res) => {
-    const user = req.headers['x-user'] || 'none';
-    res.json({ user });
+    res.json({ user: currentUser });
 });
 
 // Utility to find case-insensitive match from capabilities
@@ -46,6 +47,12 @@ app.post('/robot/v1/state', (req, res) => {
         });
     }
     
+    const user = req.headers['x-user'];
+    if (user) {
+        currentUser = user;
+        io.emit('robot:user', { user: currentUser });
+    }
+    
     io.emit('robot:state', { name: exactName });
     res.json({ success: true, message: `State directive sent: ${exactName}` });
 });
@@ -61,6 +68,12 @@ app.post('/robot/v1/emote', (req, res) => {
         });
     }
     
+    const user = req.headers['x-user'];
+    if (user) {
+        currentUser = user;
+        io.emit('robot:user', { user: currentUser });
+    }
+    
     io.emit('robot:emote', { name: exactName });
     res.json({ success: true, message: `Emote directive sent: ${exactName}` });
 });
@@ -73,6 +86,12 @@ app.post('/robot/v1/expression', (req, res) => {
     
     if (!exactName || isNaN(numericVal)) {
         return res.status(400).json({ error: `"${name}" is invalid or values are missing. Supported: ${ROBOT_CAPABILITIES.expressions.join(', ')}` });
+    }
+    
+    const user = req.headers['x-user'];
+    if (user) {
+        currentUser = user;
+        io.emit('robot:user', { user: currentUser });
     }
     
     // Prevent passing raw NaN or invalid infinity to threejs uniform arrays, clamp 0-1

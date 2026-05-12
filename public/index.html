@@ -32,6 +32,7 @@
         <p>Waiting for directives via API...</p>
         <p id="status-text">Current State: Walking</p>
         <p id="user-text">Current User: Loading...</p>
+        <button id="clear-btn" style="background-color: #FBBC05; color: black; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-top: 5px; font-weight: bold; pointer-events: auto;">Clear</button>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -211,6 +212,10 @@
             }
         });
 
+        socket.on('robot:user', (data) => {
+            userEl.textContent = `Current User: ${data.user}`;
+        });
+
         socket.on('robot:emote', (data) => {
             console.log("Received emote directive:", data);
             const exactName = findMatch(emotes, data.name);
@@ -242,6 +247,25 @@
                 console.warn(`Expression keyword "${data.name}" not matched among available face keys:`, keys);
             }
         });
+
+        // Clear button listener
+        const clearBtn = document.getElementById("clear-btn");
+        if (clearBtn) {
+            clearBtn.addEventListener("click", async () => {
+                try {
+                    await fetch('/robot/v1/state', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-User': 'none'
+                        },
+                        body: JSON.stringify({ name: 'Idle' })
+                    });
+                } catch (err) {
+                    console.error("Failed to clear robot state:", err);
+                }
+            });
+        }
 
     </script>
 </body>
