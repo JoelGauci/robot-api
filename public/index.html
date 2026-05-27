@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <title>Robot Control Center</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -24,6 +23,274 @@
             color: #333;
         }
         h1 { margin: 0 0 5px 0; font-size: 16px; }
+
+        #log-panel {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            bottom: 10px;
+            width: 30%;
+            max-width: 450px;
+            min-width: 300px;
+            background: rgba(20, 20, 25, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            color: #f3f4f6;
+            overflow: hidden;
+            transition: background-color 0.15s ease;
+            pointer-events: auto;
+        }
+
+        .log-panel-header {
+            padding: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .header-title {
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ffffff;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #9ca3af;
+            flex-grow: 1;
+        }
+
+        #opacity-slider {
+            flex-grow: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        #opacity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+
+        #opacity-val {
+            min-width: 32px;
+            text-align: right;
+        }
+
+        #clear-logs-btn {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        #clear-logs-btn:hover {
+            background: rgba(239, 68, 68, 0.35);
+            color: #ffffff;
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        #log-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+
+        #log-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #log-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        /* Individual Log Style */
+        .log-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 11px;
+            animation: logFadeIn 0.2s ease-out;
+        }
+
+        @keyframes logFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .log-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .log-method-url {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .method-badge {
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .method-badge.GET { background-color: #2563eb; }
+        .method-badge.POST { background-color: #059669; }
+        .method-badge.PUT { background-color: #d97706; }
+        .method-badge.DELETE { background-color: #dc2626; }
+
+        .log-url {
+            color: #e5e7eb;
+            word-break: break-all;
+            font-weight: 500;
+        }
+
+        .log-time {
+            color: #6b7280;
+            font-size: 9px;
+        }
+
+        .log-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .details-section {
+            margin-top: 2px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 4px 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 4px;
+            font-size: 10px;
+            color: #9ca3af;
+            user-select: none;
+            transition: background 0.15s ease;
+        }
+
+        .section-header:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+
+        .section-header-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .arrow-icon {
+            font-size: 8px;
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+
+        .arrow-icon.open {
+            transform: rotate(90deg);
+        }
+
+        .section-content {
+            display: none;
+            padding: 6px 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 0 0 4px 4px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            border-top: none;
+            font-size: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #cbd5e1;
+            font-family: inherit;
+        }
+
+        .section-content.open {
+            display: block;
+        }
+
+        .badge-jwt {
+            background-color: #a855f7;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 8px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-left: 4px;
+        }
+
+        .json-key {
+            color: #93c5fd;
+        }
+
+        .json-val-str {
+            color: #34d399;
+        }
+
+        .json-val-num {
+            color: #f59e0b;
+        }
+
+        .json-val-bool {
+            color: #f472b6;
+        }
     </style>
 </head>
 <body>
@@ -33,6 +300,21 @@
         <p id="status-text">Current State: Walking</p>
         <p id="user-text">Current User: Loading...</p>
         <button id="clear-btn" style="background-color: #FBBC05; color: black; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-top: 5px; font-weight: bold; pointer-events: auto;">Clear</button>
+    </div>
+
+    <div id="log-panel">
+        <div class="log-panel-header">
+            <div class="header-title">🔌 API Execution Logs</div>
+            <div class="controls">
+                <div class="slider-container">
+                    <span>Opacity</span>
+                    <input type="range" id="opacity-slider" min="10" max="100" value="50">
+                    <span id="opacity-val">50%</span>
+                </div>
+                <button id="clear-logs-btn">Clear Logs</button>
+            </div>
+        </div>
+        <div id="log-list"></div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -266,6 +548,141 @@
                 }
             });
         }
+
+        // --- PREMIUM LOG STREAM HANDLERS ---
+        const logList = document.getElementById('log-list');
+        const opacitySlider = document.getElementById('opacity-slider');
+        const opacityVal = document.getElementById('opacity-val');
+        const logPanel = document.getElementById('log-panel');
+        const clearLogsBtn = document.getElementById('clear-logs-btn');
+
+        // Opacity Slider control
+        opacitySlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            opacityVal.textContent = `${val}%`;
+            logPanel.style.background = `rgba(20, 20, 25, ${val / 100})`;
+        });
+
+        // Clear logs
+        clearLogsBtn.addEventListener('click', () => {
+            logList.innerHTML = '';
+        });
+
+        // Helper to color and syntax highlight JSON
+        function formatHighlightJson(obj) {
+            const str = JSON.stringify(obj, null, 2);
+            return str.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, function (match) {
+                let cls = 'json-val-num';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else {
+                        cls = 'json-val-str';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-val-bool';
+                } else if (/null/.test(match)) {
+                    cls = 'json-val-null';
+                }
+                return `<span class="${cls}">${match}</span>`;
+            });
+        }
+
+        // Listen to robot:log event
+        socket.on('robot:log', (data) => {
+            // Check scroll position before appending to decide whether we should auto-scroll
+            const shouldScroll = logList.scrollHeight - logList.clientHeight <= logList.scrollTop + 50;
+
+            // Create log item structure
+            const logItem = document.createElement('div');
+            logItem.className = 'log-item';
+
+            const uniqueId = 'log-' + Math.random().toString(36).substr(2, 9);
+
+            // Headers html
+            const headersHtml = data.headers ? `
+                <div class="details-section">
+                    <div class="section-header" data-target="${uniqueId}-headers">
+                        <span class="section-header-title">📋 Headers</span>
+                        <span class="arrow-icon">▶</span>
+                    </div>
+                    <div id="${uniqueId}-headers" class="section-content">${formatHighlightJson(data.headers)}</div>
+                </div>
+            ` : '';
+
+            // Body html
+            const bodyHtml = data.body ? `
+                <div class="details-section">
+                    <div class="section-header" data-target="${uniqueId}-body">
+                        <span class="section-header-title">📦 Body</span>
+                        <span class="arrow-icon">▶</span>
+                    </div>
+                    <div id="${uniqueId}-body" class="section-content">${formatHighlightJson(data.body)}</div>
+                </div>
+            ` : '';
+
+            // JWT decoded html
+            let jwtHtml = '';
+            let jwtBadge = '';
+            if (data.jwt) {
+                jwtBadge = `<span class="badge-jwt">🔑 JWT</span>`;
+                jwtHtml = `
+                    <div class="details-section">
+                        <div class="section-header" data-target="${uniqueId}-jwt" style="border-left: 2px solid #a855f7;">
+                            <span class="section-header-title" style="color: #c084fc;">🔑 JWT Decoded (${data.jwt.headerName})</span>
+                            <span class="arrow-icon" style="color: #c084fc;">▶</span>
+                        </div>
+                        <div id="${uniqueId}-jwt" class="section-content jwt-payload" style="border-left: 2px solid #a855f7;">${formatHighlightJson(data.jwt.payload)}</div>
+                    </div>
+                `;
+            }
+
+            logItem.innerHTML = `
+                <div class="log-meta">
+                    <div class="log-method-url">
+                        <span class="method-badge ${data.method}">${data.method}</span>
+                        <span class="log-url">${data.url}</span>
+                        ${jwtBadge}
+                    </div>
+                    <span class="log-time">${data.timestamp}</span>
+                </div>
+                <div class="log-details">
+                    ${headersHtml}
+                    ${jwtHtml}
+                    ${bodyHtml}
+                </div>
+            `;
+
+            // Add event listeners for collapsible sections
+            logItem.querySelectorAll('.section-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const contentId = header.getAttribute('data-target');
+                    const contentEl = document.getElementById(contentId);
+                    const arrow = header.querySelector('.arrow-icon');
+                    
+                    const isOpen = contentEl.classList.contains('open');
+                    if (isOpen) {
+                        contentEl.classList.remove('open');
+                        arrow.classList.remove('open');
+                    } else {
+                        contentEl.classList.add('open');
+                        arrow.classList.add('open');
+                    }
+                });
+            });
+
+            logList.appendChild(logItem);
+
+            // Limit to last 50 logs to prevent memory creep/bloat
+            while (logList.children.length > 50) {
+                logList.removeChild(logList.firstChild);
+            }
+
+            // Auto-scroll if user was at bottom
+            if (shouldScroll) {
+                logList.scrollTop = logList.scrollHeight;
+            }
+        });
 
     </script>
 </body>

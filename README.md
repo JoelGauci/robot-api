@@ -42,6 +42,19 @@ Drives granular morph target control to modulate facial features.
 
 ---
 
+### 🔌 Real-Time API Execution Logs
+
+The app features a modern, interactive, and semi-transparent **Execution Logs Panel** overlaying the right side of the screen (using 30% width). It provides a premium live-stream of all requests received by the API:
+
+*   **Live Stream:** Powered by Socket.io, instantly captures all inbound API calls (method, path, timestamp, query/body, and headers) while ignoring static page asset noise.
+*   **Glassmorphism Interface:** Designed using a sleek dark-mode theme with Tailwind-inspired colors, a premium `backdrop-filter: blur(12px)` overlay, and a custom-built scrollable feed.
+*   **Adjustable Opacity Control:** Includes a slider in the header allowing users to adjust the translucency of the log overlay from **10% to 100%** in real time.
+*   **Automatic JWT Decoder:** Scans incoming headers (like `Authorization: Bearer ...` or custom JWT headers) and decodes base64url payloads on the fly in the backend without heavy libraries.
+*   **Collapsible & Highlighted Code blocks:** Allows expanding **Headers**, **Bodies**, and **JWT payloads** directly in the list with a custom client-side JSON syntax highlighter.
+*   **Traffic Simulator Script:** A helper script `send_demo_requests.sh` is provided in the repository to generate dummy traffic, custom headers, and full JWT signatures for quick verification.
+
+---
+
 ## Getting Started
 
 ### Prerequisites

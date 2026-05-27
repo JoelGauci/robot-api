@@ -10,6 +10,76 @@ const io = new Server(server);
 
 app.use(cors());
 app.use(express.json());
+
+// Helper to decode base64url/base64 to string safely
+function base64Decode(str) {
+    try {
+        const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+        return Buffer.from(padded, 'base64').toString('utf8');
+    } catch (e) {
+        return null;
+    }
+}
+
+// Decode JWT payload safely
+function decodeJwt(token) {
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+        const payloadStr = base64Decode(parts[1]);
+        if (!payloadStr) return null;
+        return JSON.parse(payloadStr);
+    } catch (e) {
+        return null;
+    }
+}
+
+// Helper to scan all headers for JWT-like strings
+function findAndDecodeJwt(headers) {
+    for (const key in headers) {
+        const val = headers[key];
+        if (typeof val !== 'string') continue;
+        
+        let token = '';
+        if (val.toLowerCase().startsWith('bearer ')) {
+            token = val.substring(7).trim();
+        } else {
+            const parts = val.split('.');
+            if (parts.length === 3 && parts.every(p => /^[a-zA-Z0-9_-]+$/.test(p))) {
+                token = val;
+            }
+        }
+        
+        if (token) {
+            const decoded = decodeJwt(token);
+            if (decoded) {
+                return { headerName: key, token, payload: decoded };
+            }
+        }
+    }
+    return null;
+}
+
+// HTTP logging middleware for non-static and non-socket.io requests
+app.use((req, res, next) => {
+    const path = req.path;
+    const isStatic = path.endsWith('.glb') || path.endsWith('.html') || path.endsWith('.js') || path.endsWith('.css') || path.startsWith('/socket.io');
+    
+    if (!isStatic) {
+        const logData = {
+            timestamp: new Date().toLocaleTimeString(),
+            method: req.method,
+            url: req.originalUrl || req.url,
+            headers: req.headers,
+            body: req.body && Object.keys(req.body).length > 0 ? req.body : null,
+            jwt: findAndDecodeJwt(req.headers)
+        };
+        io.emit('robot:log', logData);
+    }
+    next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 const ROBOT_CAPABILITIES = {
